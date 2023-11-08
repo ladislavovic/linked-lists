@@ -1,13 +1,13 @@
 package cz.kul.linkedlists;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
 
-public abstract class AbstractSortedLInkedList<T> {
+class BaseSortedLinkedList<T> implements List<T> {
 
 	private Node<T> first;
 
@@ -15,42 +15,119 @@ public abstract class AbstractSortedLInkedList<T> {
 
 	private Comparator<T> comparator;
 
-	AbstractSortedLInkedList(Comparator<T> comparator) {
+	BaseSortedLinkedList(Comparator<T> comparator) {
 		this.comparator = comparator;
 	}
 
-	public void add(T val) {
+	BaseSortedLinkedList(Collection<T> items, Comparator<T> comparator) {
+		this.comparator = comparator;
+		for (T item : items) {
+			add(item); // TODO replace with addAll
+		}
+	}
+
+	public boolean add(T val) {
 		Node<T> item = createNode(val);
 
 		if (first == null) {
 			first = item;
-			return;
+			size++;
+			return true;
 		}
 
 		Node<T> current = first;
 		while (true) {
-			int res = comparator.compare(current.getValue(), val);
+			int res = comparator.compare(val, current.getValue());
 			if (res > 0) {
 				if (current.getNext() == null) {
-					item.setPrevious(current);
+					insertAfter(current, item);
 					break;
 				} else {
 					current = current.getNext();
 				}
 			} else {
-				item.setPrevious(current.getPrevious());
-				item.setNext(current);
+				insertBefore(current, item);
 				break;
 			}
 		}
 
 		size++;
+		return true;
 	}
+
+	private void insertBefore(Node<T> node, Node<T> inserted) {
+		inserted.setPrevious(node.getPrevious());
+		inserted.setNext(node);
+
+		if (node.getPrevious() != null) {
+			node.getPrevious().setNext(inserted);
+		}
+
+		node.setPrevious(inserted);
+
+		if (node == first) {
+			first = inserted;
+		}
+	}
+
+	private void insertAfter(Node<T> node, Node<T> inserted) {
+		inserted.setPrevious(node);
+		inserted.setNext(node.getNext());
+
+		if (node.getNext() != null) {
+			node.getNext().setPrevious(inserted);
+		}
+
+		node.setNext(inserted);
+	}
+
+
+
+
+
+
+
+
+
+	@Override
+	public boolean remove(Object o) {
+		return false;
+	}
+
+	@Override
+	public boolean containsAll(Collection<?> c) {
+		return false;
+	}
+
+	@Override
+	public boolean addAll(Collection<? extends T> c) {
+		return false;
+	}
+
+	@Override
+	public boolean addAll(int index, Collection<? extends T> c) {
+		return false;
+	}
+
+	@Override
+	public boolean removeAll(Collection<?> c) {
+		return false;
+	}
+
+	@Override
+	public boolean retainAll(Collection<?> c) {
+		return false;
+	}
+
+
+
+
+
 
 	private Node<T> getNode(int index) {
 		Node<T> n = first;
 		for (long i = 0; i < index; i++) {
-			n = first.getNext();
+			n = n.getNext();
 		}
 		return n;
 	}
@@ -74,7 +151,7 @@ public abstract class AbstractSortedLInkedList<T> {
 		toRemove.setNext(null);
 
 		if (toRemove == first) {
-			first = null;
+			first = next;
 		}
 
 		size--;
@@ -82,7 +159,7 @@ public abstract class AbstractSortedLInkedList<T> {
 		return toRemove.getValue();
 	}
 
-	public long size() {
+	public int size() {
 		return size;
 	}
 
@@ -90,7 +167,7 @@ public abstract class AbstractSortedLInkedList<T> {
 		return first == null;
 	}
 
-	public int indexOf(T value) {
+	public int indexOf(Object value) {
 		int index = 0;
 		for (Node<T> n = first; n != null; n = n.getNext()) {
 			if (Objects.equals(value, n.getValue())) {
@@ -101,7 +178,7 @@ public abstract class AbstractSortedLInkedList<T> {
 		return -1;
 	}
 
-	public int lastIndexOf(T value) {
+	public int lastIndexOf(Object value) {
 		int index = 0;
 		int lastMatch = -1;
 		for (Node<T> n = first; n != null; n = n.getNext()) {
@@ -117,23 +194,23 @@ public abstract class AbstractSortedLInkedList<T> {
 		return lastMatch;
 	}
 
-	public boolean contains(T value) {
+	public boolean contains(Object value) {
 		return indexOf(value) >= 0;
 	}
 
 	private class SLLIterator implements ListIterator<T> {
+
+		Node<T> current;
+		int currentIndex = 0;
 
 		SLLIterator() {
 			current = first;
 			currentIndex = 0;
 		}
 
-		Node<T> current;
-		int currentIndex = 0;
-
 		@Override
 		public boolean hasNext() {
-			return current.getNext() != null;
+			return current != null;
 		}
 
 		@Override
@@ -189,8 +266,34 @@ public abstract class AbstractSortedLInkedList<T> {
 		return listIterator();
 	}
 
+
+
+
+
+
+
+	@Override
+	public Object[] toArray() {
+		return new Object[0];
+	}
+
+	@Override
+	public <T1> T1[] toArray(T1[] a) {
+		return null;
+	}
+
 	public ListIterator<T> listIterator() {
 		return new SLLIterator();
+	}
+
+	@Override
+	public ListIterator<T> listIterator(int index) {
+		return null;
+	}
+
+	@Override
+	public List<T> subList(int fromIndex, int toIndex) {
+		return null;
 	}
 
 	public void clear() {
@@ -203,6 +306,32 @@ public abstract class AbstractSortedLInkedList<T> {
 			n = next;
 		}
 		first = null;
+	}
+
+
+	@Override
+	public String toString() {
+		Iterator<T> it = iterator();
+		if (it.hasNext()) {
+			return "[]";
+		}
+
+		final int MAX = 10;
+		StringBuilder sb = new StringBuilder();
+		sb.append("[");
+		for (int i = 0; i < MAX && it.hasNext(); i++) {
+			sb.append(it.next());
+			if (it.hasNext()) {
+				sb.append(", ");
+			}
+		}
+
+		if (size >= MAX) {
+			sb.append("...");
+		}
+
+		sb.append("]");
+		return sb.toString();
 	}
 
 	public boolean equals(Object o) {
@@ -236,7 +365,17 @@ public abstract class AbstractSortedLInkedList<T> {
 		return node.getValue();
 	}
 
-	public AbstractSortedLInkedList<T> sublist(int from, int to) {
+	@Override
+	public T set(int index, T element) {
+		return null;
+	}
+
+	@Override
+	public void add(int index, T element) {
+
+	}
+
+	public BaseSortedLinkedList<T> sublist(int from, int to) {
 		checkIndex(from);
 		checkIndex(to); // TODO to index can be equal to size
 
@@ -249,8 +388,8 @@ public abstract class AbstractSortedLInkedList<T> {
 	}
 
 	private void checkIndex(int index) {
-		if (index >= size) {
-			String msg = String.format("Index out of range. index={}, size={}", index, size);
+		if (index >= size || index < 0) {
+			String msg = String.format("Index out of range. index=%s, size=%s", index, size);
 			throw new IndexOutOfBoundsException(msg);
 		}
 
