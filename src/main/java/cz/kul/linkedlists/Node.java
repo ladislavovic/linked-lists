@@ -1,23 +1,37 @@
 package cz.kul.linkedlists;
 
-public class Node<T> {
+/**
+ * Node of the bi-directional linked list.
+ *
+ * @param <T> Type of the element
+ */
+class Node<T> {
 
-	T value;
+	/**
+	 * Element holded in this node
+	 */
+	T element;
 
+	/**
+	 * Previous Node. Can be null.
+	 */
 	Node<T> previous;
 
+	/**
+	 * Next Node. Can be null.
+	 */
 	Node<T> next;
 
-	public Node(T value) {
-		this.value = value;
+	public Node(T element) {
+		this.element = element;
 	}
 
-	public T getValue() {
-		return value;
+	public T getElement() {
+		return element;
 	}
 
-	public void setValue(T value) {
-		this.value = value;
+	public void setElement(T element) {
+		this.element = element;
 	}
 
 	public Node<T> getPrevious() {

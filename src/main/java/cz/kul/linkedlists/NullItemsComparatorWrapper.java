@@ -2,7 +2,20 @@ package cz.kul.linkedlists;
 
 import java.util.Comparator;
 
-public class NullItemsComparatorWrapper<T> implements Comparator <T> {
+/**
+ * <p>
+ * Comparator wrapper, which can compare null elements.
+ * </p>
+ *
+ * <p>
+ * It considers null as lower than any not null element. If there
+ * are two not null elements, they are compared by wrapped
+ * comparator.
+ * </p>
+ *
+ * @param <T> Type of the contained element
+ */
+class NullItemsComparatorWrapper<T> implements Comparator <T> {
 
 	private Comparator<T> wrapped;
 

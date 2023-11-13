@@ -1,16 +1,41 @@
 package cz.kul.linkedlists;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
+/**
+ * <p>An implementation of sorted linked list.</p>
+ *
+ * <p>It is a base class for lists containing particular data types elements.</p>
+ *
+ * <p>It implements {@link List} interface. So the behaviour of methods
+ * inherited from this interface is defined there.</p>
+ *
+ * <p>Features</p>
+ * <ul>
+ *   <li>Keeps elements sorted</li>
+ *   <li>Can contain null elements</li>
+ *   <li>For singlethread access only. If you need to access from more threads, you must synchronize.</li>
+ * </ul>
+ *
+ * @param <T> Type of contained element
+ *
+ * @see List
+ */
 class BaseSortedLinkedList<T> implements List<T> {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(BaseSortedLinkedList.class);
+
 	/**
-	 * The first node of the linked linst
+	 * The first node of the linked list
 	 */
 	private Node<T> first;
 
@@ -20,7 +45,7 @@ class BaseSortedLinkedList<T> implements List<T> {
 	private int size = 0;
 
 	/**
-	 * The comparator for value sorting
+	 * The comparator for element sorting
 	 */
 	private final Comparator<T> comparator;
 
@@ -28,33 +53,34 @@ class BaseSortedLinkedList<T> implements List<T> {
 		this.comparator = comparator;
 	}
 
-	BaseSortedLinkedList(Collection<T> items, Comparator<T> comparator) {
+	BaseSortedLinkedList(Collection<T> elements, Comparator<T> comparator) {
 		this.comparator = comparator;
-		addAll(items);
+		addAll(elements);
 	}
 
 	@Override
-	public boolean add(T val) {
-		Node<T> item = createNode(val);
+	public boolean add(T e) {
+		Node<T> node = createNode(e);
 
 		if (first == null) {
-			first = item;
+			first = node;
 			size++;
+			LOGGER.trace("An element '" + e + "' added.");
 			return true;
 		}
 
 		Node<T> current = first;
 		while (true) {
-			int res = comparator.compare(val, current.getValue());
+			int res = comparator.compare(e, current.getElement());
 			if (res > 0) {
 				if (current.getNext() == null) {
-					insertAfter(current, item);
+					insertAfter(current, node);
 					break;
 				} else {
 					current = current.getNext();
 				}
 			} else {
-				insertBefore(current, item);
+				insertBefore(current, node);
 				break;
 			}
 		}
@@ -65,7 +91,7 @@ class BaseSortedLinkedList<T> implements List<T> {
 
 	@Override
 	public boolean remove(Object o) {
-		Node<T> node = firstNodeAndIndex(o).node;
+		Node<T> node = findFirstOccurrence(o);
 		if (node != null) {
 			removeNode(node);
 			return true;
@@ -75,8 +101,8 @@ class BaseSortedLinkedList<T> implements List<T> {
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		for (Object item : c) {
-			if (!contains(item)) {
+		for (Object element : c) {
+			if (!contains(element)) {
 				return false;
 			}
 		}
@@ -85,22 +111,22 @@ class BaseSortedLinkedList<T> implements List<T> {
 
 	@Override
 	public boolean addAll(Collection<? extends T> c) {
-		for (T val : c) {
-			add(val);
+		for (T e : c) {
+			add(e);
 		}
 		return !c.isEmpty();
 	}
 
 	@Override
 	public boolean addAll(int index, Collection<? extends T> c) {
-		throw new UnsupportedOperationException("Adding to particular index is not supported in sorted list.");
+		throw notPossibleBecauseOfSortedCollection();
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
 		boolean modified = false;
-		for (Object val : c) {
-			if (remove(val)) {
+		for (Object e : c) {
+			if (remove(e)) {
 				modified = true;
 			}
 		}
@@ -117,7 +143,7 @@ class BaseSortedLinkedList<T> implements List<T> {
 		checkIndex(index);
 		Node<T> toRemove = getNode(index);
 		removeNode(toRemove);
-		return toRemove.getValue();
+		return toRemove.getElement();
 	}
 
 	@Override
@@ -131,16 +157,16 @@ class BaseSortedLinkedList<T> implements List<T> {
 	}
 
 	@Override
-	public int indexOf(Object value) {
-		return firstNodeAndIndex(value).index;
+	public int indexOf(Object e) {
+		return findIndexOfFirstOccurrence(e);
 	}
 
 	@Override
-	public int lastIndexOf(Object value) {
+	public int lastIndexOf(Object e) {
 		int index = 0;
 		int lastMatch = -1;
 		for (Node<T> n = first; n != null; n = n.getNext()) {
-			if (Objects.equals(value, n.getValue())) {
+			if (Objects.equals(e, n.getElement())) {
 				lastMatch = index;
 			} else {
 				if (lastMatch >= 0) {
@@ -153,8 +179,8 @@ class BaseSortedLinkedList<T> implements List<T> {
 	}
 
 	@Override
-	public boolean contains(Object value) {
-		return indexOf(value) >= 0;
+	public boolean contains(Object e) {
+		return indexOf(e) >= 0;
 	}
 
 	@Override
@@ -170,9 +196,6 @@ class BaseSortedLinkedList<T> implements List<T> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <U> U[] toArray(U[] a) {
-
-		// TODO does it store ArrayStoreException when wrong array type?
-
 		if (a.length < size) {
 			a = (U[]) java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), size);
 		}
@@ -191,13 +214,14 @@ class BaseSortedLinkedList<T> implements List<T> {
 
 	@Override
 	public ListIterator<T> listIterator() {
-		return new BaseSortedLinkedListIterator();
+		return new BaseSortedLinkedListIterator(first, 0);
 	}
 
 	@Override
 	public ListIterator<T> listIterator(int index) {
-		// TODO impelement
-		return null;
+		checkIndex(index);
+		Node<T> node = getNode(index);
+		return new BaseSortedLinkedListIterator(node, index);
 	}
 
 	@Override
@@ -207,7 +231,8 @@ class BaseSortedLinkedList<T> implements List<T> {
 
 	public void clear() {
 
-		// TODO GC comment
+		// Cleaning links between nodes is not necessary but it
+		// makes work easier for GC
 		for (Node<T> n = first; n != null; ) {
 			Node<T> next = n.getNext();
 			n.setPrevious(null);
@@ -216,7 +241,6 @@ class BaseSortedLinkedList<T> implements List<T> {
 		}
 		first = null;
 	}
-
 
 	@Override
 	public String toString() {
@@ -263,7 +287,7 @@ class BaseSortedLinkedList<T> implements List<T> {
 
 	@Override
 	public int hashCode() {
-		T firstVal = isEmpty() ? null : first.getValue();
+		T firstVal = isEmpty() ? null : first.getElement();
 		return Objects.hash(firstVal, size);
 	}
 
@@ -271,21 +295,21 @@ class BaseSortedLinkedList<T> implements List<T> {
 		checkIndex(index);
 
 		Node<T> node = getNode(index);
-		return node.getValue();
+		return node.getElement();
 	}
 
 	@Override
 	public T set(int index, T element) {
-		return null;
+		throw notPossibleBecauseOfSortedCollection();
 	}
 
 	@Override
 	public void add(int index, T element) {
-
+		throw notPossibleBecauseOfSortedCollection();
 	}
 
-	private Node<T> createNode(T value) {
-		return new Node<T>(value);
+	private Node<T> createNode(T e) {
+		return new Node<T>(e);
 	}
 
 	private void checkIndex(int index) {
@@ -309,6 +333,8 @@ class BaseSortedLinkedList<T> implements List<T> {
 		if (node == first) {
 			first = inserted;
 		}
+
+		LOGGER.trace("An element '" + inserted.getElement() + "' added.");
 	}
 
 	private void insertAfter(Node<T> node, Node<T> inserted) {
@@ -320,6 +346,8 @@ class BaseSortedLinkedList<T> implements List<T> {
 		}
 
 		node.setNext(inserted);
+
+		LOGGER.trace("An element '" + inserted.getElement() + "' added.");
 	}
 
 	private Node<T> getNode(int index) {
@@ -341,7 +369,6 @@ class BaseSortedLinkedList<T> implements List<T> {
 			next.setPrevious(previous);
 		}
 
-		// TODO is it needed? yes, document it more
 		toRemove.setPrevious(null);
 		toRemove.setNext(null);
 
@@ -350,12 +377,14 @@ class BaseSortedLinkedList<T> implements List<T> {
 		}
 
 		size--;
+
+		LOGGER.trace("An element '" + toRemove.getElement() + "' removed.");
 	}
 
-	private NodeAndIndex<T> firstNodeAndIndex(Object value) {
+	private NodeAndIndex<T> findFirstOccurrenceWithIndex(Object e) {
 		int index = 0;
 		for (Node<T> n = first; n != null; n = n.getNext()) {
-			if (Objects.equals(value, n.getValue())) {
+			if (Objects.equals(e, n.getElement())) {
 				return new NodeAndIndex<>(n, index);
 			}
 			index++;
@@ -363,66 +392,109 @@ class BaseSortedLinkedList<T> implements List<T> {
 		return new NodeAndIndex<>(null, -1);
 	}
 
+	private Node<T> findFirstOccurrence(Object e) {
+		return findFirstOccurrenceWithIndex(e).node;
+	}
+
+	private int findIndexOfFirstOccurrence(Object e) {
+		return findFirstOccurrenceWithIndex(e).index;
+	}
+
+	private UnsupportedOperationException notPossibleBecauseOfSortedCollection() {
+		throw new UnsupportedOperationException("This operations does not make sense in sorted collection.");
+	}
+
 	private class BaseSortedLinkedListIterator implements ListIterator<T> {
 
-		Node<T> current;
-		int currentIndex = 0;
+		/** This node is returned when you call {@link #next()} */
+		Node<T> next;
 
-		BaseSortedLinkedListIterator() {
-			current = first;
-			currentIndex = 0;
+		/** This node is returned when you call {@link #previous()} */
+		Node<T> previous;
+
+		/** The last node returned by {@link #next()} or {@link #previous()} */
+		Node<T> lastReturned;
+
+		/** The index of current iterator position */
+		int nextIndex = 0;
+
+		BaseSortedLinkedListIterator(Node<T> node, int nodeIndex) {
+			next = node;
+			previous = node != null ? node.getPrevious() : null;
+			nextIndex = nodeIndex;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return current != null;
+			return next != null;
 		}
 
 		@Override
 		public T next() {
-			Node<T> ret = current;
-			current = current.getNext();
-			currentIndex++;
-			return ret.getValue();
+			if (next == null) {
+				throw new NoSuchElementException();
+			}
+			lastReturned = next;
+			previous = next;
+			next = next.getNext();
+			nextIndex++;
+			return lastReturned.getElement();
 		}
 
 		@Override
 		public boolean hasPrevious() {
-			return current.getPrevious() != null;
+			return previous != null;
 		}
 
 		@Override
 		public T previous() {
-			Node<T> ret = current;
-			current = current.getPrevious();
-			currentIndex--;
-			return ret.getValue();
+			if (previous == null) {
+				throw new NoSuchElementException();
+			}
+			lastReturned = previous;
+			next = previous;
+			previous = previous.getPrevious();
+			nextIndex--;
+			return lastReturned.getElement();
 		}
 
 		@Override
 		public int nextIndex() {
-			return currentIndex;
+			return nextIndex;
 		}
 
 		@Override
 		public int previousIndex() {
-			return currentIndex - 1;
+			return nextIndex - 1;
 		}
 
 		@Override
 		public void remove() {
-			// TODO
-
+			if (lastReturned == null) {
+				throw new IllegalStateException();
+			}
+			if (previous == lastReturned) {
+				previous = lastReturned.getPrevious();
+				removeNode(lastReturned);
+				nextIndex--;
+			} else if (next == lastReturned) {
+				next = lastReturned.getNext();
+				removeNode(lastReturned);
+				next = previous.next;
+			} else {
+			  throw new IllegalStateException("An unexpected state occurred.");
+			}
+			lastReturned = null;
 		}
 
 		@Override
 		public void set(T t) {
-			current.setValue(t);
+			throw notPossibleBecauseOfSortedCollection();
 		}
 
 		@Override
 		public void add(T t) {
-			// TODO
+			throw notPossibleBecauseOfSortedCollection();
 		}
 
 	}
@@ -437,6 +509,5 @@ class BaseSortedLinkedList<T> implements List<T> {
 		}
 
 	}
-
 
 }

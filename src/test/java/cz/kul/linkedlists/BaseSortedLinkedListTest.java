@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -99,6 +102,71 @@ class BaseSortedLinkedListTest {
 			list.remove(0);
 			assertEquals(0, list.size());
 		}
+	}
+
+	@Test
+	void linkIterator() {
+		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), new DefaultComparator());
+		ListIterator<Integer> it = list.listIterator();
+
+		assertThrows(NoSuchElementException.class, it::previous);
+		chekcIteratorState(it, true, false, 0, -1);
+		assertEquals(0, it.next());
+		assertEquals(1, it.next());
+		assertEquals(2, it.next());
+		chekcIteratorState(it, true, true, 3, 2);
+		assertEquals(3, it.next());
+		assertEquals(4, it.next());
+		assertEquals(5, it.next());
+		chekcIteratorState(it, false, true, 6, 5);
+		assertThrows(NoSuchElementException.class, it::next);
+		assertEquals(5, it.previous());
+		assertEquals(4, it.previous());
+		assertEquals(3, it.previous());
+		chekcIteratorState(it, true, true, 3, 2);
+		assertEquals(2, it.previous());
+		assertEquals(1, it.previous());
+		assertEquals(0, it.previous());
+		chekcIteratorState(it, true, false, 0, -1);
+		assertThrows(NoSuchElementException.class, it::previous);
+	}
+
+	private void chekcIteratorState(
+			ListIterator<Integer> it,
+			boolean hasNext,
+			boolean hasPrevious,
+			int nextIndex,
+			int previousIndex) {
+		assertEquals(hasNext, it.hasNext());
+		assertEquals(hasPrevious, it.hasPrevious());
+		assertEquals(nextIndex, it.nextIndex());
+		assertEquals(previousIndex, it.previousIndex());
+	}
+
+	@Test
+	void testRemovingByIterator() {
+		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), new DefaultComparator());
+		ListIterator<Integer> it = list.listIterator();
+		assertThrows(IllegalStateException.class, it::remove);
+		it.next();
+		it.remove();
+		assertEquals(List.of(1, 2, 3, 4, 5), list);
+		it.next();
+		it.next();
+		it.next();
+		it.remove();
+		assertEquals(List.of(1, 2, 4, 5), list);
+		it.next();
+		it.next();
+		it.remove();
+		assertEquals(List.of(1, 2, 4), list);
+	}
+
+	@Test
+	void testStream() {
+		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), new DefaultComparator());
+		List<Integer> list2 = list.stream().collect(Collectors.toList());
+		assertEquals(list, list2);
 	}
 
 	@Test

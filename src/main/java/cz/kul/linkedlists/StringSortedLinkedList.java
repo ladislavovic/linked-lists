@@ -1,26 +1,33 @@
 package cz.kul.linkedlists;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Objects;
 
+/**
+ * <p>
+ * Sorted linked list implementation for String elements.
+ * </p>
+ *
+ * <p>
+ * Elements are sorted from the lowest to greatest. Nulls are at the beginning. If you need
+ * different order, use you own {@link Comparator}.
+ * </p>
+ *
+ */
 public class StringSortedLinkedList extends BaseSortedLinkedList<String> {
 
 	public StringSortedLinkedList() {
 		this(Collections.emptyList());
 	}
 
-	public StringSortedLinkedList(Collection<String> values) {
-		this(values, new NullItemsComparatorWrapper<>(String::compareTo));
+	public StringSortedLinkedList(Collection<String> elements) {
+		this(elements, new NullItemsComparatorWrapper<>(String::compareTo));
 	}
 
-	public StringSortedLinkedList(Collection<String> values, Comparator<String> comparator) {
+	public StringSortedLinkedList(Collection<String> elements, Comparator<String> comparator) {
 		super(comparator);
-		for (String value : values) {
-			this.add(value);
-		}
+		this.addAll(elements);
 	}
 
 }
