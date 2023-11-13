@@ -5,10 +5,10 @@ This library provides implementation of sorted linked list. There are two implem
 * `StringSortedLinkedList` - for `String` elements
 
 ## Requirements
-This library requires Java 11. For logging it uses SLF4J. No other dependencies are needed.
+This library requires Java 11. For logging it uses SLF4J. No other dependencies are required.
 
 ## Basic Features
-Call constructor to create an instance of the list:
+Call constructor to create a list instance:
 ```java
 
 // Create an empty list
@@ -54,21 +54,15 @@ is put in the right place according to the sorting.
 By default, elements are sorted in natural order and `null` items are
 sorted to the beginning.
 
-If you need a different sorting, provide a `Comparator` instance during
-the list creation, then the collection is sorted according to the
+If you need a different sorting, provide your custom `Comparator`.
+Then the collection is sorted according to the
 given comparator:
 ```java
 Comparator<String> customComparator = ...;
 var list = new StringSortedLinkedList(customComparator);
 ```
 
-## Pointers
-
 ## Concurrency
 The implementation is not thread safe. If you need to access the list
 from more threads, you must synchronize them. Otherwise the collection
 can be in inconsisted state.
-
-## Missing features
-* method `List.subList(int fromIndex, int toIndex)` is not implemented
-* method `List.retainAll(Collection<?> c)` is not implemented
