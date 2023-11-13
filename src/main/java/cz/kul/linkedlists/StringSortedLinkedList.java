@@ -25,6 +25,10 @@ public class StringSortedLinkedList extends BaseSortedLinkedList<String> {
 		this(elements, new NullItemsComparatorWrapper<>(String::compareTo));
 	}
 
+	public StringSortedLinkedList(Comparator<String> comparator) {
+		this(Collections.emptyList(), comparator);
+	}
+
 	public StringSortedLinkedList(Collection<String> elements, Comparator<String> comparator) {
 		super(comparator);
 		this.addAll(elements);

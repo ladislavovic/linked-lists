@@ -25,6 +25,10 @@ public class IntegerSortedLinkedList extends BaseSortedLinkedList<Integer> {
 		this(elements, new NullItemsComparatorWrapper<>(Integer::compareTo));
 	}
 
+	public IntegerSortedLinkedList(Comparator<Integer> comparator) {
+		this(Collections.emptyList(), comparator);
+	}
+
 	public IntegerSortedLinkedList(Collection<Integer> elements, Comparator<Integer> comparator) {
 		super(comparator);
 		this.addAll(elements);

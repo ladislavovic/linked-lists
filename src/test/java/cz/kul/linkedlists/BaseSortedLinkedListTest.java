@@ -14,34 +14,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BaseSortedLinkedListTest {
 
-
-	// TODO duplicity
-	private static class DefaultComparator implements Comparator<Integer> {
-
-		@Override
-		public int compare(Integer a, Integer b) {
-			if (a != null) {
-				if (b != null) {
-					return a.compareTo(b);
-				} else {
-					return 1;
-				}
-			} else {
-				if (b != null) {
-					return -1;
-				} else {
-					return 0;
-				}
-			}
-		}
-
-	}
-
-
+	final Comparator<Integer> DEFAULT_COMPARATOR = new NullItemsComparatorWrapper<>(Integer::compareTo);
 
 	@Test
 	void add() {
-		var list = new BaseSortedLinkedList<>(new DefaultComparator());
+		var list = new BaseSortedLinkedList<>(DEFAULT_COMPARATOR);
 		list.add(3);
 		assertEquals(List.of(3), list);
 		list.add(5);
@@ -56,7 +33,7 @@ class BaseSortedLinkedListTest {
 
 	@Test
 	void removeByIndex() {
-		var list = new BaseSortedLinkedList<>(Arrays.asList(null, 2, 3, 4, 5), new DefaultComparator());
+		var list = new BaseSortedLinkedList<>(Arrays.asList(null, 2, 3, 4, 5), DEFAULT_COMPARATOR);
 		list.remove(1);
 		assertEquals(Arrays.asList(null, 3, 4, 5), list);
 		list.remove(0);
@@ -69,7 +46,7 @@ class BaseSortedLinkedListTest {
 
 	@Test
 	void removeByItem() {
-		var list = new BaseSortedLinkedList<>(Arrays.asList(null, 2, 3, 4, 5), new DefaultComparator());
+		var list = new BaseSortedLinkedList<>(Arrays.asList(null, 2, 3, 4, 5), DEFAULT_COMPARATOR);
 		assertTrue(list.remove((Object) 3));
 		assertEquals(Arrays.asList(null, 2, 4, 5), list);
 
@@ -86,12 +63,12 @@ class BaseSortedLinkedListTest {
 	@Test
 	void size() {
 		{
-			var list = new BaseSortedLinkedList<>(Arrays.asList(null, 2, 3, 4, 5), new DefaultComparator());
+			var list = new BaseSortedLinkedList<>(Arrays.asList(null, 2, 3, 4, 5), DEFAULT_COMPARATOR);
 			assertEquals(5, list.size());
 		}
 
 		{
-			var list = new BaseSortedLinkedList<>(new DefaultComparator());
+			var list = new BaseSortedLinkedList<>(DEFAULT_COMPARATOR);
 			assertEquals(0, list.size());
 			list.add(10);
 			assertEquals(1, list.size());
@@ -106,32 +83,32 @@ class BaseSortedLinkedListTest {
 
 	@Test
 	void linkIterator() {
-		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), new DefaultComparator());
+		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), DEFAULT_COMPARATOR);
 		ListIterator<Integer> it = list.listIterator();
 
 		assertThrows(NoSuchElementException.class, it::previous);
-		chekcIteratorState(it, true, false, 0, -1);
+		checkIteratorState(it, true, false, 0, -1);
 		assertEquals(0, it.next());
 		assertEquals(1, it.next());
 		assertEquals(2, it.next());
-		chekcIteratorState(it, true, true, 3, 2);
+		checkIteratorState(it, true, true, 3, 2);
 		assertEquals(3, it.next());
 		assertEquals(4, it.next());
 		assertEquals(5, it.next());
-		chekcIteratorState(it, false, true, 6, 5);
+		checkIteratorState(it, false, true, 6, 5);
 		assertThrows(NoSuchElementException.class, it::next);
 		assertEquals(5, it.previous());
 		assertEquals(4, it.previous());
 		assertEquals(3, it.previous());
-		chekcIteratorState(it, true, true, 3, 2);
+		checkIteratorState(it, true, true, 3, 2);
 		assertEquals(2, it.previous());
 		assertEquals(1, it.previous());
 		assertEquals(0, it.previous());
-		chekcIteratorState(it, true, false, 0, -1);
+		checkIteratorState(it, true, false, 0, -1);
 		assertThrows(NoSuchElementException.class, it::previous);
 	}
 
-	private void chekcIteratorState(
+	private void checkIteratorState(
 			ListIterator<Integer> it,
 			boolean hasNext,
 			boolean hasPrevious,
@@ -145,7 +122,7 @@ class BaseSortedLinkedListTest {
 
 	@Test
 	void testRemovingByIterator() {
-		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), new DefaultComparator());
+		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), DEFAULT_COMPARATOR);
 		ListIterator<Integer> it = list.listIterator();
 		assertThrows(IllegalStateException.class, it::remove);
 		it.next();
@@ -164,52 +141,29 @@ class BaseSortedLinkedListTest {
 
 	@Test
 	void testStream() {
-		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), new DefaultComparator());
+		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(List.of(0, 1, 2, 3, 4, 5), DEFAULT_COMPARATOR);
 		List<Integer> list2 = list.stream().collect(Collectors.toList());
 		assertEquals(list, list2);
 	}
 
 	@Test
-	void isEmpty() {
-	}
-
-	@Test
-	void indexOf() {
-	}
-
-	@Test
 	void lastIndexOf() {
-	}
-
-	@Test
-	void contains() {
-	}
-
-	@Test
-	void iterator() {
-	}
-
-	@Test
-	void listIterator() {
+		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(
+				Arrays.asList(null, null, null, 1, 0, 5, 3, 3, 3),
+				DEFAULT_COMPARATOR);
+		assertEquals(2, list.lastIndexOf(null));
+		assertEquals(3, list.lastIndexOf(0));
+		assertEquals(4, list.lastIndexOf(1));
+		assertEquals(7, list.lastIndexOf(3));
+		assertEquals(8, list.lastIndexOf(5));
 	}
 
 	@Test
 	void clear() {
+		BaseSortedLinkedList<Integer> list = new BaseSortedLinkedList<>(Arrays.asList(1, 2, 3), DEFAULT_COMPARATOR);
+		assertFalse(list.isEmpty());
+		list.clear();
+		assertTrue(list.isEmpty());
 	}
 
-	@Test
-	void testEquals() {
-	}
-
-	@Test
-	void testHashCode() {
-	}
-
-	@Test
-	void get() {
-	}
-
-	@Test
-	void sublist() {
-	}
 }

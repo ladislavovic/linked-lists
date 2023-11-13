@@ -4,6 +4,9 @@ This library provides implementation of sorted linked list. There are two implem
 * `IntegerSortedLinkedList` - for `Integer` elements
 * `StringSortedLinkedList` - for `String` elements
 
+## Requirements
+This library requires Java 11. For logging it uses SLF4J. No other dependencies are needed.
+
 ## Basic Features
 Call constructor to create an instance of the list:
 ```java
